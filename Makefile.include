@@ -309,6 +309,7 @@ BASELIBS += $(APPDEPS)
 
 ELFFILE ?= $(BINDIR)/$(APPLICATION).elf
 HEXFILE ?= $(ELFFILE:.elf=.hex)
+DOTBINFILE ?= $(ELFFILE:.elf=.bin)
 
 # variables used to compile and link c++
 CPPMIX ?= $(if $(wildcard *.cpp),1,)
@@ -334,6 +335,11 @@ else
 endif
 	$(Q)$(SIZE) $(ELFFILE)
 	$(Q)$(OBJCOPY) $(OFLAGS) $(ELFFILE) $(HEXFILE)
+    ifneq ($(BOARD),pic32-clicker)
+    ifneq ($(BOARD),pic32-wifire)
+		$(Q)$(OBJCOPY) -O binary $(ELFFILE) $(DOTBINFILE)
+    endif
+    endif
 endif
 endif # BUILD_IN_DOCKER
 
