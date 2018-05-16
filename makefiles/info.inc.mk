@@ -1,9 +1,10 @@
 .PHONY: info-objsize info-buildsizes info-build info-boards-supported \
         info-features-missing info-modules info-cpu \
-        info-features-provided info-features-required
+        info-features-provided info-features-required \
+        info-debug-variable-%
 
 info-objsize:
-	@case "${SORTROW}" in \
+	@case "$(SORTROW)" in \
 	  text) SORTROW=1 ;; \
 	  data) SORTROW=2 ;; \
 	  bss) SORTROW=3 ;; \
@@ -18,7 +19,7 @@ info-objsize:
 	  sort -rnk$${SORTROW}
 
 info-buildsize:
-	@$(SIZE) -d -B $(BINDIR)/$(APPLICATION).elf || echo ''
+	@$(SIZE) -d -B $(ELFFILE) || echo ''
 
 info-build:
 	@echo 'APPLICATION: $(APPLICATION)'
@@ -125,3 +126,6 @@ info-features-required:
 
 info-features-missing:
 	@for i in $(sort $(filter-out $(FEATURES_PROVIDED), $(FEATURES_REQUIRED))); do echo $$i; done
+
+info-debug-variable-%:
+	@echo $($*)

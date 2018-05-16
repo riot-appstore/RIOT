@@ -197,7 +197,7 @@ ipv6_hdr_t *gnrc_ipv6_get_header(gnrc_pktsnip_t *pkt)
 {
     ipv6_hdr_t *hdr = NULL;
     gnrc_pktsnip_t *tmp = gnrc_pktsnip_search_type(pkt, GNRC_NETTYPE_IPV6);
-    if ((tmp) && ipv6_hdr_is(tmp->data)) {
+    if ((tmp != NULL) && (tmp->data != NULL) && ipv6_hdr_is(tmp->data)) {
         hdr = ((ipv6_hdr_t*) tmp->data);
     }
 
@@ -715,7 +715,7 @@ static void _receive(gnrc_pktsnip_t *pkt)
 
     for (ipv6 = pkt; ipv6 != NULL; ipv6 = ipv6->next) { /* find IPv6 header if already marked */
         if ((ipv6->type == GNRC_NETTYPE_IPV6) && (ipv6->size == sizeof(ipv6_hdr_t)) &&
-            (ipv6_hdr_is(ipv6->data))) {
+            (ipv6->data != NULL) && (ipv6_hdr_is(ipv6->data))) {
             break;
         }
 
@@ -723,7 +723,7 @@ static void _receive(gnrc_pktsnip_t *pkt)
     }
 
     if (ipv6 == NULL) {
-        if (!ipv6_hdr_is(pkt->data)) {
+        if ((pkt->data == NULL) || !ipv6_hdr_is(pkt->data)) {
             DEBUG("ipv6: Received packet was not IPv6, dropping packet\n");
             gnrc_pktbuf_release(pkt);
             return;
@@ -784,13 +784,20 @@ static void _receive(gnrc_pktsnip_t *pkt)
     /* extract header */
     hdr = (ipv6_hdr_t *)ipv6->data;
 
+    uint16_t ipv6_len = byteorder_ntohs(hdr->len);
+
+    if ((ipv6_len == 0) && (hdr->nh != PROTNUM_IPV6_NONXT)) {
+        /* this doesn't even make sense */
+        DEBUG("ipv6: payload length 0, but next header not NONXT\n");
+        gnrc_pktbuf_release(pkt);
+        return;
+    }
     /* if available, remove any padding that was added by lower layers
      * to fulfill their minimum size requirements (e.g. ethernet) */
-    if ((ipv6 != pkt) && (byteorder_ntohs(hdr->len) < pkt->size)) {
+    else if ((ipv6 != pkt) && (ipv6_len < pkt->size)) {
         gnrc_pktbuf_realloc_data(pkt, byteorder_ntohs(hdr->len));
     }
-    else if (byteorder_ntohs(hdr->len) >
-             (gnrc_pkt_len_upto(pkt, GNRC_NETTYPE_IPV6) - sizeof(ipv6_hdr_t))) {
+    else if (ipv6_len > (gnrc_pkt_len_upto(pkt, GNRC_NETTYPE_IPV6) - sizeof(ipv6_hdr_t))) {
         DEBUG("ipv6: invalid payload length: %d, actual: %d, dropping packet\n",
               (int) byteorder_ntohs(hdr->len),
               (int) (gnrc_pkt_len_upto(pkt, GNRC_NETTYPE_IPV6) - sizeof(ipv6_hdr_t)));

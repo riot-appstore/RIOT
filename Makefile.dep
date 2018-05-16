@@ -534,7 +534,6 @@ endif
 
 ifneq (,$(filter arduino,$(USEMODULE)))
   FEATURES_REQUIRED += arduino
-  FEATURES_REQUIRED += cpp
   USEMODULE += xtimer
 endif
 
@@ -696,6 +695,32 @@ endif
 
 ifneq (,$(filter benchmark,$(USEMODULE)))
   USEMODULE += xtimer
+endif
+
+ifneq (,$(filter skald_%,$(USEMODULE)))
+  USEMODULE += skald
+endif
+
+ifneq (,$(filter skald,$(USEMODULE)))
+  FEATURES_REQUIRED += radio_ble
+  USEMODULE += xtimer
+  USEMODULE += random
+endif
+
+ifneq (,$(filter rdcli_simple_standalone,$(USEMODULE)))
+  USEMODULE += rdcli_simple
+  USEMODULE += xtimer
+endif
+
+ifneq (,$(filter rdcli_simple,$(USEMODULE)))
+  USEMODULE += rdcli_common
+  USEMODULE += fmt
+endif
+
+ifneq (,$(filter rdcli_common,$(USEMODULE)))
+  USEMODULE += fmt
+  USEMODULE += gcoap
+  USEMODULE += luid
 endif
 
 # always select gpio (until explicit dependencies are sorted out)

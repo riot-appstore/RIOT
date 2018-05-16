@@ -1,7 +1,9 @@
-export CPU = native
+export NATIVEINCLUDES += -DNATIVE_INCLUDES
+export NATIVEINCLUDES += -I$(RIOTBOARD)/$(BOARD)/include/
+export NATIVEINCLUDES += -I$(RIOTBASE)/core/include/
+export NATIVEINCLUDES += -I$(RIOTBASE)/drivers/include/
 
-# Configuration for core/include/kernel_types.h
-CFLAGS += -DNATIVE_INCLUDES
+export CPU = native
 
 USEMODULE += native-drivers
 
@@ -25,12 +27,10 @@ ifneq ($(shell uname -s),Darwin)
 else
   ifeq (0,$(shell which gobjcopy 2>&1 > /dev/null ; echo $$?))
     export OBJCOPY ?= gobjcopy
-    export OFLAGS ?= -O ihex
   else
-    # If gobjcopy is not available, just create an empty file. The hexfile
+    # If gobjcopy is not available, just do nothing. The hexfile
     # is not used for native anyways.
-    export OBJCOPY ?= touch
-    export OFLAGS =
+    export OBJCOPY ?= true
   endif
 endif
 
@@ -110,12 +110,12 @@ term-valgrind: export VALGRIND_FLAGS ?= \
 	--fullpath-after=$(RIOTBASE)/ \
 	--read-var-info=yes
 debug-valgrind-server: export VALGRIND_FLAGS ?= --vgdb=yes --vgdb-error=0 -v \
-	--leak-check=full --track-origins=yes --fullpath-after=${RIOTBASE} \
+	--leak-check=full --track-origins=yes --fullpath-after=$(RIOTBASE) \
 	--read-var-info=yes
 term-cachegrind: export CACHEGRIND_FLAGS += --tool=cachegrind
 term-gprof: export TERMPROG = GMON_OUT_PREFIX=gmon.out $(ELFFILE)
 all-valgrind: export CFLAGS += -DHAVE_VALGRIND_H -g
-all-valgrind: export CFLAGS += $(shell pkg-config valgrind --cflags)
+all-valgrind: export NATIVEINCLUDES += $(shell pkg-config valgrind --cflags)
 all-debug: export CFLAGS += -g
 all-cachegrind: export CFLAGS += -g
 all-gprof: export CFLAGS += -pg
@@ -123,6 +123,8 @@ all-gprof: export LINKFLAGS += -pg
 all-asan: export CFLAGS += -fsanitize=address -fno-omit-frame-pointer -g
 all-asan: export CFLAGS += -DNATIVE_IN_CALLOC
 all-asan: export LINKFLAGS += -fsanitize=address -fno-omit-frame-pointer -g
+
+export INCLUDES += $(NATIVEINCLUDES)
 
 export CFLAGS += -DDEBUG_ASSERT_VERBOSE
 
@@ -167,8 +169,8 @@ debug-valgrind-server:
 	$(VALGRIND) $(VALGRIND_FLAGS) $(ELFFILE) $(PORT)
 
 debug-valgrind:
-	$(eval VALGRIND_PID ?= $(shell pgrep -n memcheck-x86-li -u ${USER} | cut -d" " -f1))
-	$(eval DEBUGGER_FLAGS := -ex "target remote | vgdb --pid=${VALGRIND_PID}" $(DEBUGGER_FLAGS))
+	$(eval VALGRIND_PID ?= $(shell pgrep -n memcheck-x86-li -u $(USER) | cut -d" " -f1))
+	$(eval DEBUGGER_FLAGS := -ex "target remote | vgdb --pid=$(VALGRIND_PID)" $(DEBUGGER_FLAGS))
 	$(DEBUGGER) $(DEBUGGER_FLAGS)
 
 term-cachegrind:

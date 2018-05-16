@@ -19,12 +19,21 @@
  */
 
 #include <errno.h>
+#include <stdint.h>
+#include <stdatomic.h>
+
 #include "net/gcoap.h"
+#include "mutex.h"
 #include "random.h"
 #include "thread.h"
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
+
+/* Return values used by the _find_resource function. */
+#define GCOAP_RESOURCE_FOUND 0
+#define GCOAP_RESOURCE_WRONG_METHOD -1
+#define GCOAP_RESOURCE_NO_PATH -2
 
 /* Internal functions */
 static void *_event_loop(void *arg);
@@ -38,7 +47,7 @@ static void _expire_request(gcoap_request_memo_t *memo);
 static bool _endpoints_equal(const sock_udp_ep_t *ep1, const sock_udp_ep_t *ep2);
 static void _find_req_memo(gcoap_request_memo_t **memo_ptr, coap_pkt_t *pdu,
                            const sock_udp_ep_t *remote);
-static void _find_resource(coap_pkt_t *pdu, coap_resource_t **resource_ptr,
+static int _find_resource(coap_pkt_t *pdu, coap_resource_t **resource_ptr,
                                             gcoap_listener_t **listener_ptr);
 static int _find_observer(sock_udp_ep_t **observer, sock_udp_ep_t *remote);
 static int _find_obs_memo(gcoap_observe_memo_t **memo, sock_udp_ep_t *remote,
@@ -57,22 +66,43 @@ static gcoap_listener_t _default_listener = {
     NULL
 };
 
+/* Container for the state of gcoap itself */
+typedef struct {
+    mutex_t lock;                       /* Shares state attributes safely */
+    gcoap_listener_t *listeners;        /* List of registered listeners */
+    gcoap_request_memo_t open_reqs[GCOAP_REQ_WAITING_MAX];
+                                        /* Storage for open requests; if first
+                                           byte of an entry is zero, the entry
+                                           is available */
+    atomic_uint next_message_id;        /* Next message ID to use */
+    sock_udp_ep_t observers[GCOAP_OBS_CLIENTS_MAX];
+                                        /* Observe clients; allows reuse for
+                                           observe memos */
+    gcoap_observe_memo_t observe_memos[GCOAP_OBS_REGISTRATIONS_MAX];
+                                        /* Observed resource registrations */
+    uint8_t resend_bufs[GCOAP_RESEND_BUFS_MAX][GCOAP_PDU_BUF_SIZE];
+                                        /* Buffers for PDU for request resends;
+                                           if first byte of an entry is zero,
+                                           the entry is available */
+} gcoap_state_t;
+
 static gcoap_state_t _coap_state = {
     .listeners   = &_default_listener,
 };
 
 static kernel_pid_t _pid = KERNEL_PID_UNDEF;
 static char _msg_stack[GCOAP_STACK_SIZE];
+static msg_t _msg_queue[GCOAP_MSG_QUEUE_SIZE];
 static sock_udp_t _sock;
 
 
 /* Event/Message loop for gcoap _pid thread. */
 static void *_event_loop(void *arg)
 {
-    msg_t msg_rcvd, msg_queue[GCOAP_MSG_QUEUE_SIZE];
+    msg_t msg_rcvd;
     (void)arg;
 
-    msg_init_queue(msg_queue, GCOAP_MSG_QUEUE_SIZE);
+    msg_init_queue(_msg_queue, GCOAP_MSG_QUEUE_SIZE);
 
     sock_udp_ep_t local;
     memset(&local, 0, sizeof(sock_udp_ep_t));
@@ -236,19 +266,21 @@ static void _listen(sock_udp_t *sock)
 static size_t _handle_req(coap_pkt_t *pdu, uint8_t *buf, size_t len,
                                                          sock_udp_ep_t *remote)
 {
-    coap_resource_t *resource;
-    gcoap_listener_t *listener;
+    coap_resource_t *resource  = NULL;
+    gcoap_listener_t *listener = NULL;
     sock_udp_ep_t *observer    = NULL;
     gcoap_observe_memo_t *memo = NULL;
     gcoap_observe_memo_t *resource_memo = NULL;
 
-    _find_resource(pdu, &resource, &listener);
-    if (resource == NULL) {
-        return gcoap_response(pdu, buf, len, COAP_CODE_PATH_NOT_FOUND);
-    }
-    else {
-        /* used below to ensure a memo not already recorded for the resource */
-        _find_obs_memo_resource(&resource_memo, resource);
+    switch (_find_resource(pdu, &resource, &listener)) {
+        case GCOAP_RESOURCE_WRONG_METHOD:
+            return gcoap_response(pdu, buf, len, COAP_CODE_METHOD_NOT_ALLOWED);
+        case GCOAP_RESOURCE_NO_PATH:
+            return gcoap_response(pdu, buf, len, COAP_CODE_PATH_NOT_FOUND);
+        case GCOAP_RESOURCE_FOUND:
+            /* used below to ensure a memo not already recorded for the resource */
+            _find_obs_memo_resource(&resource_memo, resource);
+            break;
     }
 
     if (coap_get_observe(pdu) == COAP_OBS_REGISTER) {
@@ -325,10 +357,15 @@ static size_t _handle_req(coap_pkt_t *pdu, uint8_t *buf, size_t len,
  *
  * param[out] resource_ptr -- found resource
  * param[out] listener_ptr -- listener for found resource
+ * return `GCOAP_RESOURCE_FOUND` if the resource was found,
+ *        `GCOAP_RESOURCE_WRONG_METHOD` if a resource was found but the method
+ *        code didn't match and `GCOAP_RESOURCE_NO_PATH` if no matching
+ *        resource was found.
  */
-static void _find_resource(coap_pkt_t *pdu, coap_resource_t **resource_ptr,
+static int _find_resource(coap_pkt_t *pdu, coap_resource_t **resource_ptr,
                                             gcoap_listener_t **listener_ptr)
 {
+    int ret = GCOAP_RESOURCE_NO_PATH;
     unsigned method_flag = coap_method2flag(coap_get_code_detail(pdu));
 
     /* Find path for CoAP msg among listener resources and execute callback. */
@@ -338,9 +375,6 @@ static void _find_resource(coap_pkt_t *pdu, coap_resource_t **resource_ptr,
         for (size_t i = 0; i < listener->resources_len; i++) {
             if (i) {
                 resource++;
-            }
-            if (! (resource->methods & method_flag)) {
-                continue;
             }
 
             int res = strcmp((char *)&pdu->url[0], resource->path);
@@ -352,16 +386,20 @@ static void _find_resource(coap_pkt_t *pdu, coap_resource_t **resource_ptr,
                 break;
             }
             else {
+                if (! (resource->methods & method_flag)) {
+                    ret = GCOAP_RESOURCE_WRONG_METHOD;
+                    continue;
+                }
+
                 *resource_ptr = resource;
                 *listener_ptr = listener;
-                return;
+                return GCOAP_RESOURCE_FOUND;
             }
         }
         listener = listener->next;
     }
-    /* resource not found */
-    *resource_ptr = NULL;
-    *listener_ptr = NULL;
+
+    return ret;
 }
 
 /*

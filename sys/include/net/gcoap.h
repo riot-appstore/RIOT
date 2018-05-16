@@ -44,9 +44,10 @@
  * this by uncommenting the appropriate lines in gcoap's make file.
  *
  * gcoap allows an application to specify a collection of request resource paths
- * it wants to be notified about. Create an array of resources, coap_resource_t
- * structs. Use gcoap_register_listener() at application startup to pass in
- * these resources, wrapped in a gcoap_listener_t.
+ * it wants to be notified about. Create an array of resources (coap_resource_t
+ * structs). Note that the elements must be ordered alphabetically with respect
+ * to the resource path. Use gcoap_register_listener() at application startup
+ * to pass in these resources, wrapped in a gcoap_listener_t.
  *
  * gcoap itself defines a resource for `/.well-known/core` discovery, which
  * lists all of the registered paths.
@@ -213,11 +214,9 @@
 #define NET_GCOAP_H
 
 #include <stdint.h>
-#include <stdatomic.h>
 
 #include "net/ipv6/addr.h"
 #include "net/sock/udp.h"
-#include "mutex.h"
 #include "net/nanocoap.h"
 #include "xtimer.h"
 
@@ -228,7 +227,9 @@ extern "C" {
 /**
  * @brief  Size for module message queue
  */
+#ifndef GCOAP_MSG_QUEUE_SIZE
 #define GCOAP_MSG_QUEUE_SIZE    (4)
+#endif
 
 /**
  * @brief   Server port; use RFC 7252 default if not defined
@@ -411,7 +412,8 @@ extern "C" {
  * @brief Stack size for module thread
  */
 #ifndef GCOAP_STACK_SIZE
-#define GCOAP_STACK_SIZE (THREAD_STACKSIZE_DEFAULT + DEBUG_EXTRA_STACKSIZE)
+#define GCOAP_STACK_SIZE (THREAD_STACKSIZE_DEFAULT + DEBUG_EXTRA_STACKSIZE \
+                          + sizeof(coap_pkt_t))
 #endif
 
 /**
@@ -476,28 +478,6 @@ typedef struct {
     uint8_t token[GCOAP_TOKENLEN_MAX];  /**< Client token for notifications */
     unsigned token_len;                 /**< Actual length of token attribute */
 } gcoap_observe_memo_t;
-
-/**
- * @brief   Container for the state of gcoap itself
- */
-typedef struct {
-    mutex_t lock;                       /**< Shares state attributes safely */
-    gcoap_listener_t *listeners;        /**< List of registered listeners */
-    gcoap_request_memo_t open_reqs[GCOAP_REQ_WAITING_MAX];
-                                        /**< Storage for open requests; if first
-                                             byte of an entry is zero, the entry
-                                             is available */
-    atomic_uint next_message_id;        /**< Next message ID to use */
-    sock_udp_ep_t observers[GCOAP_OBS_CLIENTS_MAX];
-                                        /**< Observe clients; allows reuse for
-                                             observe memos */
-    gcoap_observe_memo_t observe_memos[GCOAP_OBS_REGISTRATIONS_MAX];
-                                        /**< Observed resource registrations */
-    uint8_t resend_bufs[GCOAP_RESEND_BUFS_MAX][GCOAP_PDU_BUF_SIZE];
-                                        /**< Buffers for PDU for request resends;
-                                             if first byte of an entry is zero,
-                                             the entry is available */
-} gcoap_state_t;
 
 /**
  * @brief   Initializes the gcoap thread and device

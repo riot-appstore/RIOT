@@ -80,6 +80,10 @@
 #include "net/gnrc/ipv6/nib.h"
 #endif
 
+#ifdef MODULE_SKALD
+#include "net/skald.h"
+#endif
+
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
@@ -150,6 +154,20 @@ void auto_init(void)
 #ifdef MODULE_GNRC_IPV6_NIB
     DEBUG("Auto init gnrc_ipv6_nib module.\n");
     gnrc_ipv6_nib_init();
+#endif
+#ifdef MODULE_SKALD
+    DEBUG("Auto init Skald\n");
+    skald_init();
+#endif
+#ifdef MODULE_RDCLI_COMMON
+    DEBUG("Auto init rdcli_common module\n");
+    extern void rdcli_common_init(void);
+    rdcli_common_init();
+#endif
+#ifdef MODULE_RDCLI_SIMPLE_STANDALONE
+    DEBUG("Auto init rdcli_simple module\n");
+    extern void rdcli_simple_run(void);
+    rdcli_simple_run();
 #endif
 
 /* initialize network devices */
@@ -335,6 +353,10 @@ auto_init_mpu9150();
     extern void auto_init_hdc1000(void);
     auto_init_hdc1000();
 #endif
+#ifdef MODULE_FXOS8700
+    extern void auto_init_fxos8700(void);
+    auto_init_fxos8700();
+#endif
 #ifdef MODULE_HTS221
     extern void auto_init_hts221(void);
     auto_init_hts221();
@@ -370,6 +392,10 @@ auto_init_mpu9150();
 #ifdef MODULE_ADCXX1C
     extern void auto_init_adcxx1c(void);
     auto_init_adcxx1c();
+#endif
+#ifdef MODULE_ADS101X
+    extern void auto_init_ads101x(void);
+    auto_init_ads101x();
 #endif
 #ifdef MODULE_LIS2DH12
     extern void auto_init_lis2dh12(void);

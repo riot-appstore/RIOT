@@ -2,6 +2,10 @@ ifneq (,$(filter adcxx1c,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/adcxx1c/include
 endif
 
+ifneq (,$(filter ads101x,$(USEMODULE)))
+  USEMODULE_INCLUDES += $(RIOTBASE)/drivers/ads101x/include
+endif
+
 ifneq (,$(filter adxl345,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/adxl345/include
 endif
@@ -68,6 +72,10 @@ endif
 
 ifneq (,$(filter feetech,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/feetech/include
+endif
+
+ifneq (,$(filter fxos8700,$(USEMODULE)))
+  USEMODULE_INCLUDES += $(RIOTBASE)/drivers/fxos8700/include
 endif
 
 ifneq (,$(filter grove_ledbar,$(USEMODULE)))

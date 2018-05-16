@@ -22,6 +22,7 @@ export RIOTBASE              # The root folder of RIOT. The folder where this ve
 export RIOTCPU               # For third party CPUs this folder is the base of the CPUs.
 export RIOTBOARD             # For third party BOARDs this folder is the base of the BOARDs.
 export RIOTPKG               # For overriding RIOT's pkg directory
+export RIOTTOOLS             # Location of host machine tools
 export RIOTPROJECT           # Top level git root of the project being built, or PWD if not a git repository
 export RIOTMAKE              # Location of all supplemental Makefiles (such as this file)
 export BINDIRBASE            # This is the folder where the application should be built in. For each BOARD a different subfolder is used.
@@ -55,6 +56,7 @@ export OFLAGS                # The parameter for OBJCOPY, e.g. to strip the debu
 export OBJDUMP               # The command used to create the assembly listing.
 export OBJDUMPFLAGS          # The parameter for OBJDUMP.
 export SIZE                  # The command to read to size of the ELF sections.
+export SIZEFLAGS             # The optional size flags.
 export UNDEF                 # Object files that the linker must include in the ELFFILE even if no call to the functions or symbols (ex: interrupt vectors).
 export WERROR                # Treat all compiler warnings as errors if set to 1 (see -Werror flag in GCC manual)
 

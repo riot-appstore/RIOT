@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014 Freie Universität Berlin, Hinnerk van Bruinehsen
+ *               2018 RWTH Aachen, Josua Arndt <jarndt@ias.rwth-aachen.de>
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -14,6 +15,7 @@
  * @brief       Implementation of the kernel's architecture dependent thread interface
  *
  * @author      Hinnerk van Bruinehsen <h.v.bruinehsen@fu-berlin.de>
+ * @author      Josua Arndt <jarndt@ias.rwth-aachen.de>
  *
  * @}
  */
@@ -25,31 +27,6 @@
 #include "irq.h"
 #include "cpu.h"
 #include "board.h"
-
-
-/**
- * @brief AVR_CONTEXT_SWAP_INIT initialize the context swap trigger
- * Called when threading is first started.
- */
-#ifndef AVR_CONTEXT_SWAP_INIT
-#error AVR_CONTEXT_SWAP_INIT must be defined in board.h
-#endif
-
-/**
- * @brief AVR_CONTEXT_SWAP_INTERRUPT_VECT Name of the ISR to use for context swapping
- */
-#ifndef AVR_CONTEXT_SWAP_INTERRUPT_VECT
-#error AVR_CONTEXT_SWAP_INTERRUPT_VECT must be defined in board.h
-#endif
-
-/**
- * @brief AVR_CONTEXT_SWAP_TRIGGER executed to start the context swap
- * When executed, this should result in the interrupt named in
- * AVR_CONTEXT_SWAP_INTERRUPT_VECT being called
- */
-#ifndef AVR_CONTEXT_SWAP_TRIGGER
-#error ARV_CONTEXT_SWAP_TRIGGER must be defined in board.h
-#endif
 
 
 /*
@@ -226,7 +203,6 @@ void cpu_switch_context_exit(void) __attribute__((naked));
 void cpu_switch_context_exit(void)
 {
     sched_run();
-    AVR_CONTEXT_SWAP_INIT;
     __enter_thread_mode();
 }
 
@@ -245,33 +221,40 @@ void NORETURN __enter_thread_mode(void)
 }
 
 void thread_yield_higher(void) {
-    AVR_CONTEXT_SWAP_TRIGGER;
+    if (irq_is_in() == 0) {
+        __context_save();
+        sched_run();
+        __context_restore();
+        __asm__ volatile("ret");
+    } else {
+        sched_context_switch_request = 1;
+    }
 }
 
-
-/* Use this interrupt to perform all context switches */
-ISR(AVR_CONTEXT_SWAP_INTERRUPT_VECT, ISR_NAKED) {
+void thread_yield_isr(void) {
     __context_save();
     sched_run();
     __context_restore();
+
+    __exit_isr();
+
     __asm__ volatile("reti");
 }
-
 
 __attribute__((always_inline)) static inline void __context_save(void)
 {
     __asm__ volatile(
-        "push r0                             \n\t"
-        "in   r0, __SREG__                   \n\t"
+        "push __tmp_reg__                    \n\t"
+        "in   __tmp_reg__, __SREG__          \n\t"
         "cli                                 \n\t"
-        "push r0                             \n\t"
+        "push __tmp_reg__                    \n\t"
 #if defined(RAMPZ)
-        "in     r0, __RAMPZ__                \n\t"
-        "push   r0                           \n\t"
+        "in     __tmp_reg__, __RAMPZ__       \n\t"
+        "push   __tmp_reg__                  \n\t"
 #endif
 #if defined(EIND)
-        "in     r0, 0x3c                     \n\t"
-        "push   r0                           \n\t"
+        "in     __tmp_reg__, 0x3c            \n\t"
+        "push   __tmp_reg__                  \n\t"
 #endif
         "push r1                             \n\t"
         "clr  r1                             \n\t"
@@ -307,10 +290,10 @@ __attribute__((always_inline)) static inline void __context_save(void)
         "push r31                            \n\t"
         "lds  r26, sched_active_thread       \n\t"
         "lds  r27, sched_active_thread + 1   \n\t"
-        "in   r0, __SP_L__                   \n\t"
-        "st   x+, r0                         \n\t"
-        "in   r0, __SP_H__                   \n\t"
-        "st   x+, r0                         \n\t"
+        "in   __tmp_reg__, __SP_L__          \n\t"
+        "st   x+, __tmp_reg__                \n\t"
+        "in   __tmp_reg__, __SP_H__          \n\t"
+        "st   x+, __tmp_reg__                \n\t"
     );
 
 }
@@ -356,15 +339,15 @@ __attribute__((always_inline)) static inline void __context_restore(void)
         "pop  r2                             \n\t"
         "pop  r1                             \n\t"
 #if defined(EIND)
-        "pop    r0                           \n\t"
-        "out    0x3c, r0                     \n\t"
+        "pop    __tmp_reg__                  \n\t"
+        "out    0x3c, __tmp_reg__            \n\t"
 #endif
 #if defined(RAMPZ)
-        "pop    r0                           \n\t"
-        "out    __RAMPZ__, r0                \n\t"
+        "pop    __tmp_reg__                  \n\t"
+        "out    __RAMPZ__, __tmp_reg__       \n\t"
 #endif
-        "pop  r0                             \n\t"
-        "out  __SREG__, r0                   \n\t"
-        "pop  r0                             \n\t"
+        "pop  __tmp_reg__                    \n\t"
+        "out  __SREG__, __tmp_reg__          \n\t"
+        "pop  __tmp_reg__                    \n\t"
     );
 }
