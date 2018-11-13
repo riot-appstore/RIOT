@@ -110,22 +110,22 @@ static const uart_conf_t uart_config[] = {
         .tx_pad = UART_PAD_TX_0,
         .flags  = UART_FLAG_NONE,
         .gclk_src = GCLK_CLKCTRL_GEN_GCLK0,
-    },
-    {
-        .dev    = &SERCOM4->USART,
-        .rx_pin = GPIO_PIN(PB, 9),
-        .tx_pin = GPIO_PIN(PB, 8),
-        .mux    = GPIO_MUX_D,
-        .rx_pad = UART_PAD_RX_1,
-        .tx_pad = UART_PAD_TX_0,
-        .flags  = UART_FLAG_NONE,
-        .gclk_src = GCLK_CLKCTRL_GEN_GCLK0,
+   // },
+   // {
+   //     .dev    = &SERCOM4->USART,
+   //     .rx_pin = GPIO_PIN(PB, 9),
+   //     .tx_pin = GPIO_PIN(PB, 8),
+   //     .mux    = GPIO_MUX_D,
+   //     .rx_pad = UART_PAD_RX_1,
+   //     .tx_pad = UART_PAD_TX_0,
+   //     .flags  = UART_FLAG_NONE,
+   //     .gclk_src = GCLK_CLKCTRL_GEN_GCLK0,
     }
 };
 
 /* interrupt function name mapping */
 #define UART_0_ISR          isr_sercom3
-#define UART_1_ISR          isr_sercom4
+//#define UART_1_ISR          isr_sercom4
 
 #define UART_NUMOF          (sizeof(uart_config) / sizeof(uart_config[0]))
 /** @} */
