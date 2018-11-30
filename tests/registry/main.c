@@ -22,9 +22,10 @@
 #include <string.h>
 
 #include "shell.h"
-#include "registry/registry_store_dummy.h"
+//#include "registry/registry_store_dummy.h"
+#include "registry/registry_store_eeprom.h"
 
-registry_dummy_t registry_dummy_storage;
+registry_eeprom_t registry_eeprom_storage;
 
 int test_opt1 = 0;
 int test_opt2 = 1;
@@ -185,7 +186,7 @@ int cmd_dump(int argc, char **argv)
         return 1;
     }
     puts("Dumping storage...");
-    registry_dummy_storage.store.itf->load(&registry_dummy_storage.store,
+    registry_eeprom_storage.store.itf->load(&registry_eeprom_storage.store,
                                            _dump_cb, NULL);
     return 0;
 }
@@ -202,12 +203,11 @@ static const shell_command_t shell_commands[] = {
 
 int main(void)
 {
-
     registry_init();
     registry_register(&handler);
 
-    registry_dummy_src(&registry_dummy_storage);
-    registry_dummy_dst(&registry_dummy_storage);
+    registry_eeprom_src(&registry_eeprom_storage);
+    registry_eeprom_dst(&registry_eeprom_storage);
 
     registry_load();
 

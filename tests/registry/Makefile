@@ -3,6 +3,7 @@ include ../Makefile.tests_common
 
 USEMODULE += shell
 USEMODULE += registry
+USEMODULE += eepreg
 
 DISABLE_MODULE += auto_init
 

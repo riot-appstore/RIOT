@@ -117,6 +117,4 @@ int registry_save_one(const char *name, char *val);
 int registry_export(int (*export_func)(const char *name, char *val),
                     char *name);
 
-long strtol(const char *nptr, char **endptr, register int base);
-
 #endif

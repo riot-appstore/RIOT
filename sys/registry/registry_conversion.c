@@ -2,6 +2,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "registry/registry.h"
 #include "fmt.h"
@@ -77,7 +78,7 @@ int registry_bytes_from_str(char *val_str, void *vp, int *len)
 char *registry_str_from_value(registry_type_t type, void *vp, char *buf,
                               int buf_len)
 {
-    int32_t val;
+    int32_t val = 0;
 
     if (type == REGISTRY_TYPE_STRING) {
         return vp;

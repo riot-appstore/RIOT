@@ -54,22 +54,27 @@ registry_handler_t *registry_handler_lookup(char *name)
 int registry_parse_name(char *name, int *name_argc, char *name_argv[])
 {
     int i = 0;
+    char _name[REGISTRY_MAX_NAME_LEN];
+    char *_name_p = &_name[0];
 
-    while (name) {
-        name_argv[i++] = name;
+    strcpy(_name, name);
+
+
+    while (_name_p) {
+        name_argv[i++] = _name_p;
 
         while(1) {
-            if (*name == '\0') {
-                name = NULL;
+            if (*_name_p == '\0') {
+                _name_p = NULL;
                 break;
             }
 
-            if (*name == *REGISTRY_NAME_SEPARATOR) {
-                *name = '\0';
-                name++;
+            if (*_name_p == *REGISTRY_NAME_SEPARATOR) {
+                *_name_p = '\0';
+                _name_p++;
                 break;
             }
-            name++;
+            _name_p++;
         }
     }
     *name_argc = i;
@@ -137,7 +142,7 @@ int registry_commit(char *name)
     char *name_argv[REGISTRY_MAX_DIR_DEPTH];
     registry_handler_t *hndlr;
     int rc;
-    int rc2;
+    int rc2 = 0;
 
     if (name) {
         hndlr = registry_handler_parse_and_lookup(name, &name_argc, name_argv);
