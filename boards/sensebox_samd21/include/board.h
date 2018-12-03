@@ -25,6 +25,7 @@
 #include "cpu.h"
 #include "periph_conf.h"
 #include "periph_cpu.h"
+#include "mtd_sdcard.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -161,6 +162,12 @@ extern "C" {
  * @brief    BMP280 Pressure and temperature sensor
  */
 #define BMX280_PARAM_I2C_ADDR        (0x76)
+
+/**
+ * @brief MTD device 0 (SD Card) definition. mtd0 is defined in board.c
+ */
+extern mtd_dev_t *mtd0;
+#define MTD_0 mtd0
 
 /**
  * @brief   Initialize board specific hardware, including clock, LEDs and std-IO

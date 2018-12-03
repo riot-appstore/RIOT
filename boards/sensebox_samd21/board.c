@@ -21,6 +21,25 @@
 #include "cpu.h"
 #include "board.h"
 #include "periph/gpio.h"
+#include "sdcard_spi_params.h"
+#include "mtd_sdcard.h"
+
+/* this is provided by the sdcard_spi driver
+ * see sys/auto_init/storage/auto_init_sdcard_spi.c */
+extern sdcard_spi_t sdcard_spi_devs[sizeof(sdcard_spi_params) /
+                                    sizeof(sdcard_spi_params[0])];
+mtd_sdcard_t sensebox_sd_dev = {
+    .base = {
+        .driver = &mtd_sdcard_driver,
+        .page_size = 512,
+        .pages_per_sector = 128,
+        .sector_count = 3921920
+    },
+    .sd_card = &sdcard_spi_devs[0],
+    .params = &sdcard_spi_params[0]
+};
+
+mtd_dev_t *mtd0 = (mtd_dev_t *)&sensebox_sd_dev;
 
 void board_init(void)
 {
