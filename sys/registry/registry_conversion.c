@@ -64,14 +64,27 @@ err:
 
 int registry_bytes_from_str(char *val_str, void *vp, int *len)
 {
-    int err;
+    char buf[BASE64_ESTIMATE_BYTE_SIZE(REGISTRY_MAX_VAL_LEN)];
+    size_t _len = 0;
+    int val_len = strlen(val_str);
 
-    err = base64_decode((const unsigned char *)val_str, strlen(val_str), vp,
-                        (size_t *)len);
+    base64_decode((unsigned char *)val_str, val_len, (void *)buf, &_len);
 
-    if (err) {
-        return -1;
+    if (_len > sizeof(buf)) {
+        return -EINVAL;
     }
+
+    if (base64_decode((unsigned char *)val_str, val_len, (void *)buf, &_len) !=
+        BASE64_SUCCESS) {
+            return -EINVAL;
+    }
+
+    if ((int)_len > *len) {
+        return -EINVAL;
+    }
+    
+    memcpy(vp, (void *)buf, _len);
+
     return 0;
 }
 
@@ -114,13 +127,24 @@ char *registry_str_from_value(registry_type_t type, void *vp, char *buf,
 
 char *registry_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len)
 {
-    size_t enc_len = (size_t) buf_len;
-    int err;
+    int res;
+    char temp_buf[REGISTRY_MAX_VAL_LEN];
+    size_t enc_len = 0;
 
-    err = base64_encode(vp, vp_len, (unsigned char *)buf, &enc_len);
+    base64_encode(vp, vp_len, (unsigned char *)temp_buf, &enc_len);
 
-    if (err) {
+    if (enc_len > REGISTRY_MAX_VAL_LEN) {
         return NULL;
     }
-    return buf;
+
+    res = base64_encode(vp, vp_len, (unsigned char *)temp_buf, &enc_len);
+
+    if (res != BASE64_SUCCESS || (int)enc_len > (buf_len - 1)) {
+        return NULL;
+    }
+
+    memcpy(buf, (void *)temp_buf, enc_len);
+    buf[enc_len] = '\0';
+
+    return vp;
 }

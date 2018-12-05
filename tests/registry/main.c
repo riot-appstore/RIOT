@@ -222,6 +222,18 @@ int cmd_dump(int argc, char **argv)
     return 0;
 }
 
+static int cmd_test_bytes(int argc, char **argv) {
+    if (argc != 1) {
+        printf("usage: %s\n", argv[0]);
+        return 1;
+    }
+    for (unsigned int i = 0; i < sizeof(test_bytes); i++) {
+        printf("%2x ",test_bytes[i]);
+    }
+    puts("");
+    return 0;
+}
+
 static const shell_command_t shell_commands[] = {
     { "get", "get a parameter value", cmd_get },
     { "set", "set a parameter value", cmd_set },
@@ -229,6 +241,7 @@ static const shell_command_t shell_commands[] = {
     { "save", "save all parameters", cmd_save },
     { "load", "load stored configurations", cmd_load },
     { "dump", "dumps everything in storage", cmd_dump },
+    { "test_bytes", "dumps the bytes variable in HEX", cmd_test_bytes },
     { NULL, NULL, NULL }
 };
 
