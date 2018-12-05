@@ -23,12 +23,22 @@
 
 #include "shell.h"
 //#include "registry/registry_store_dummy.h"
-#include "registry/registry_store_eeprom.h"
+//#include "registry/registry_store_eeprom.h"
+#include "registry/registry_store_file.h"
 
-registry_eeprom_t registry_eeprom_storage;
+registry_file_t registry_file_storage = {
+    .file_name="/sda/reg"
+};
+
+#ifndef BYTES_LENGTH
+#define BYTES_LENGTH    16
+#endif
 
 int test_opt1 = 0;
 int test_opt2 = 1;
+char test_bytes[BYTES_LENGTH] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+                                 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+                                 0xAA, 0xAA};
 
 char *get_handler(int argc, char **argv, char *val, int val_len_max)
 {
@@ -41,12 +51,19 @@ char *get_handler(int argc, char **argv, char *val, int val_len_max)
             return registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt2,
                                         val, val_len_max);
         }
+        else if (!strcmp("bytes", argv[0])) {
+            return registry_str_from_bytes((void *)test_bytes, BYTES_LENGTH,
+                                           val, val_len_max);
+
+        }
     }
     return NULL;
 }
 
 int set_handler(int argc, char **argv, char *val)
 {
+    int len = BYTES_LENGTH;
+    int res = 0;
     if (argc) {
         printf("[set_handler] Setting %s to %s\n", argv[0], val);
         if (!strcmp("opt1", argv[0])) {
@@ -57,6 +74,13 @@ int set_handler(int argc, char **argv, char *val)
             return registry_value_from_str(val, REGISTRY_TYPE_INT8,
                                            (void *) &test_opt2, 0);
         }
+        else if (!strcmp("bytes", argv[0])) {
+            res = registry_bytes_from_str(val, (void *)test_bytes, &len);
+            if (res) {
+                printf("Error while parsing base64\n");
+            }
+            return res;
+        }
     }
     return -1;
 }
@@ -66,31 +90,38 @@ int export_handler(int (*export_func)(const char *name, char *val), int argc,
 {
     (void)argv;
     (void)argc;
-    char buf[10];
-    int buf_len = 10;
+    char buf[REGISTRY_MAX_VAL_LEN];
 
     if (!argc) {
         // We have to print every parameter
         registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt1, buf,
-                                buf_len);
+                                sizeof(buf));
         export_func("app/opt1", buf);
         registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt2, buf,
-                                buf_len);
+                                sizeof(buf));
         export_func("app/opt2", buf);
+        registry_str_from_bytes((void *)test_bytes, BYTES_LENGTH, buf,
+                                sizeof(buf));
+        export_func("app/bytes", buf);
         return 0;
     }
     else {
         if (!strcmp("opt1", argv[0])) {
             registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt1, buf,
-                                    buf_len);
+                                    sizeof(buf));
             export_func("app/opt1", buf);
             return 0;
         }
         else if (!strcmp("opt2", argv[0])) {
             registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt2, buf,
-                                    buf_len);
+                                    sizeof(buf));
             export_func("app/opt2", buf);
             return 0;
+        }
+        else if (!strcmp("bytes", argv[0])) {
+            registry_str_from_bytes((void *)test_bytes, BYTES_LENGTH, buf,
+                                    sizeof(buf));
+            export_func("app/bytes", buf);
         }
     }
     return 1;
@@ -186,7 +217,7 @@ int cmd_dump(int argc, char **argv)
         return 1;
     }
     puts("Dumping storage...");
-    registry_eeprom_storage.store.itf->load(&registry_eeprom_storage.store,
+    registry_file_storage.store.itf->load(&registry_file_storage.store,
                                            _dump_cb, NULL);
     return 0;
 }
@@ -206,8 +237,8 @@ int main(void)
     registry_init();
     registry_register(&handler);
 
-    registry_eeprom_src(&registry_eeprom_storage);
-    registry_eeprom_dst(&registry_eeprom_storage);
+    registry_file_src(&registry_file_storage);
+    registry_file_dst(&registry_file_storage);
 
     registry_load();
 

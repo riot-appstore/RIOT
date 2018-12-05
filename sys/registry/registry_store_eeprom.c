@@ -1,3 +1,5 @@
+#ifdef MODULE_REGISTRY_STORE_EEPROM
+
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
@@ -90,3 +92,4 @@ static int registry_eeprom_save(registry_store_t *store, const char *name,
         return -ENOMEM;
     }
 }
+#endif /* MODULE_REGISTRY_STORE_EEPROM */

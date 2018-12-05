@@ -26,8 +26,9 @@
 #define REGISTRY_NAME_SEPARATOR    "/"
 #define REGISTRY_MAX_DIR_DEPTH     8
 #define REGISTRY_VAL_SEPARATOR     '\0'
-#define REGISTRY_MAX_NAME_LEN       64
-#define REGISTRY_MAX_VAL_LEN        64
+#define REGISTRY_MAX_NAME_LEN      64
+#define REGISTRY_MAX_VAL_LEN       64
+#define REGISTRY_EXTRA_LEN         3 // '=' '\0\n' TODO: Check this
 
 typedef enum {
     REGISTRY_TYPE_NONE = 0,
