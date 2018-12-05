@@ -32,6 +32,9 @@ extern "C" {
 #define BASE64_ERROR_DATA_IN          (-3) /**< error value for invalid input buffer           */
 #define BASE64_ERROR_DATA_IN_SIZE     (-4) /**< error value for invalid input buffer size      */
 
+#define BASE64_ESTIMATE_DECODE_SIZE(str_len) ((str_len / 4) * 3)
+#define BASE64_ESTIMATE_ENCODE_SIZE(buf_len) (4 * ((buf_len + 2) / 3))
+
 /**
  * @brief Macro for estimating the amount of bytes needed for decoding a
  * given string in base64
