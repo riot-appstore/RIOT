@@ -7,11 +7,13 @@
  */
 
 /**
+ * @defgroup    sys_registry Registry
+ * @ingroup     sys
+ * @brief       RIOT Registry module for handling runtime configurations
+ * 
  * @{
- *
  * @file
- * @brief       Registry module
- *
+ * 
  * @author      Leandro Lanzieri <leandro.lanzieri@haw-hamburg.de>
  *
  * @}
@@ -23,12 +25,34 @@
 #include <stdint.h>
 #include "clist.h"
 
-#define REGISTRY_NAME_SEPARATOR    "/"
+/**
+ * @brief Separator character to define hierarchy in configurations names.
+ */
+#define REGISTRY_NAME_SEPARATOR    '/'
+
+/**
+ * @brief Maximum amount of levels of hierarchy in configurations names.
+ */
 #define REGISTRY_MAX_DIR_DEPTH     8
-#define REGISTRY_VAL_SEPARATOR     '\0'
-#define REGISTRY_MAX_NAME_LEN      64
+
+/**
+ * @brief Maximum amount of characters per level in configurations names.
+ */
+#define REGISTRY_MAX_DIR_NAME_LEN  64
+
+/**
+ * @brief Maximum length of a value when converted to string
+ */
 #define REGISTRY_MAX_VAL_LEN       64
-#define REGISTRY_EXTRA_LEN         3 // '=' '\0\n' TODO: Check this
+
+/**
+ * @brief Maximum length of a configuration name.
+ * @{
+ */
+#define REGISTRY_MAX_NAME_LEN      ((REGISTRY_MAX_DIR_NAME_LEN * \
+                                    REGISTRY_MAX_DIR_DEPTH) + \
+                                    (REGISTRY_MAX_DIR_DEPTH - 1))
+/** @} */
 
 typedef enum {
     REGISTRY_TYPE_NONE = 0,
@@ -75,24 +99,88 @@ typedef struct {
 
 extern clist_node_t registry_handlers;
 
+/**
+ * @brief Initializes the RIOT Registry and the store modules.
+ */
 void registry_init(void);
 
+/**
+ * @brief Initializes the store module.
+ */
 void registry_store_init(void);
 
+/**
+ * @brief Registers a new group of handlers for a configuration group.
+ * 
+ * @param[in] handler Pointer to the handlers structure.
+ */
 void registry_register(registry_handler_t *handler);
 
+/**
+ * @brief Registers a new store as a source of configurations. Multiple stores
+ *        can be configured as sources at the same time. Configurations will be
+ *        loaded from all of them.
+ * 
+ * @param[in] src Pointer to the store to register as source.
+ */
 void registry_src_register(registry_store_t *src);
 
+/**
+ * @brief Registers a new store as a destination for saving configurations.
+ *        Only one store can be registered as destination at a time. If a
+ *        previous store had been registered before it will be replaced by the
+ *        new one.
+ * 
+ * @param[in] dst Pointer to the store to register
+ */
 void registry_dst_register(registry_store_t *dst);
 
+/**
+ * @brief Searches through the registered handlers of configurations by name.
+ * 
+ * @note The name of a group of configurations should not contain the
+ * @ref REGISTRY_NAME_SEPARATOR.
+ * 
+ * @param[in] name String containing the name to look for.
+ * @return registry_handler_t* Pointer to the handlers. NULL if not found.
+ */
 registry_handler_t *registry_handler_lookup(char *name);
 
+/**
+ * @brief Parses the name of a configuration parameter by spliting it into the
+ *        hierarchy levels and then looks for its handlers.
+ * 
+ * @param[in] name Name of the parameter to be parsed
+ * @param[out] name_argc Pointer to store the amount of parts of the name after
+ *             splitting.
+ * @param[out] name_argv Array of pointers to the parts that compose the name
+ *             after splitting.
+ * @return registry_handler_t* Pointer to the handlers. NULL if not found.
+ */
 registry_handler_t *registry_handler_parse_and_lookup(char *name,
                                                       int *name_argc,
                                                       char *name_argv[]);
 
-int registry_parse_name(char *name, int *name_argc, char *name_argv[]);
+/**
+ * @brief Parses the name of a configuration parameter by splitting it into the
+ *        hierarchy levels.
+ * 
+ * @param[in] name Name of the parameter to be parsed
+ * @param[out] name_argc Pointer to store the amount of parts of the name after
+ *             splitting.
+ * @param[out] name_argv Array of pointers to the parts that compose the name
+ *             after splitting.
+ */
+void registry_parse_name(char *name, int *name_argc, char *name_argv[]);
 
+/**
+ * @brief Sets the value of a parameter that belongs to a configuration group.
+ * 
+ * @param[in] name Name of the parameter to be set
+ * @param[in] val_str New value for the parameter
+ * @return int EINVAL if handlers could not be found. Otherwise returns the
+ *             value of the set handler function.k
+ */
 int registry_set_value(char *name, char *val_str);
 
 char *registry_get_value(char *name, char *buf, int buf_len);
@@ -118,4 +206,4 @@ int registry_save_one(const char *name, char *val);
 int registry_export(int (*export_func)(const char *name, char *val),
                     char *name);
 
-#endif
+#endif /* REGISTRY_H */

@@ -5,6 +5,9 @@
 #include "registry/registry.h"
 #include "kernel_defines.h"
 
+#define ENABLE_DEBUG (1)
+#include "debug.h"
+
 static int _registry_cmp_name(clist_node_t *current, void *name);
 static int _registry_call_commit(clist_node_t *current, void *name);
 
@@ -51,25 +54,20 @@ registry_handler_t *registry_handler_lookup(char *name)
     return hndlr;
 }
 
-int registry_parse_name(char *name, int *name_argc, char *name_argv[])
+void registry_parse_name(char *name, int *name_argc, char *name_argv[])
 {
     int i = 0;
-    char _name[REGISTRY_MAX_NAME_LEN];
-    char *_name_p = &_name[0];
-
-    strcpy(_name, name);
-
+    char *_name_p = &name[0];
 
     while (_name_p) {
         name_argv[i++] = _name_p;
-
         while(1) {
             if (*_name_p == '\0') {
                 _name_p = NULL;
                 break;
             }
 
-            if (*_name_p == *REGISTRY_NAME_SEPARATOR) {
+            if (*_name_p == REGISTRY_NAME_SEPARATOR) {
                 *_name_p = '\0';
                 _name_p++;
                 break;
@@ -77,19 +75,19 @@ int registry_parse_name(char *name, int *name_argc, char *name_argv[])
             _name_p++;
         }
     }
+
     *name_argc = i;
-    return 0;
 }
 
 registry_handler_t *registry_handler_parse_and_lookup(char *name, int *name_argc,
                                                   char *name_argv[])
 {
-    int res;
-    res = registry_parse_name(name, name_argc, name_argv);
+    registry_parse_name(name, name_argc, name_argv);
     
-    if (res) {
-        return NULL;
+    for (int i = 0; i < *name_argc; i++) {
+        printf("  %s\n",name_argv[i]);
     }
+
     return registry_handler_lookup(name_argv[0]);
 }
 
@@ -172,7 +170,9 @@ int registry_export(int (*export_func)(const char *name, char *val), char *name)
     char *name_argv[REGISTRY_MAX_DIR_DEPTH];
     registry_handler_t *hndlr;
 
+
     if (name) {
+        DEBUG("[registry export] exporting %s\n", name);
         hndlr = registry_handler_parse_and_lookup(name, &name_argc, name_argv);
         if (!hndlr) {
             return -EINVAL;
@@ -185,6 +185,7 @@ int registry_export(int (*export_func)(const char *name, char *val), char *name)
         }
     }
     else {
+        DEBUG("[registry export] exporting all\n");
         clist_node_t *node = registry_handlers.next;
 
         if (!node) {

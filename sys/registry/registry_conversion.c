@@ -24,7 +24,7 @@ int registry_value_from_str(char *val_str, registry_type_t type, void *vp,
         case REGISTRY_TYPE_INT32:
         case REGISTRY_TYPE_BOOL:
             val = strtol(val_str, &eptr, 0);
-            if (*eptr != REGISTRY_VAL_SEPARATOR) {
+            if (*eptr != '\0') {
                 goto err;
             }
             if (type == REGISTRY_TYPE_BOOL) {
@@ -64,7 +64,7 @@ err:
 
 int registry_bytes_from_str(char *val_str, void *vp, int *len)
 {
-    char buf[BASE64_ESTIMATE_BYTE_SIZE(REGISTRY_MAX_VAL_LEN)];
+    char buf[BASE64_ESTIMATE_DECODE_SIZE(REGISTRY_MAX_VAL_LEN)];
     size_t _len = 0;
     int val_len = strlen(val_str);
 
@@ -84,6 +84,7 @@ int registry_bytes_from_str(char *val_str, void *vp, int *len)
     }
     
     memcpy(vp, (void *)buf, _len);
+    *len = (int)_len;
 
     return 0;
 }

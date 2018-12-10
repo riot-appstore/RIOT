@@ -1,6 +1,6 @@
 #include <string.h>
 #include <stdio.h>
-#include "registry/registry_store_dummy.h"
+#include "registry/store/registry_store_dummy.h"
 
 dummy_store_storage_t dummy_store[DUMMY_STORE_CAPACITY];
 

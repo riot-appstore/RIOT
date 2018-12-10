@@ -1,4 +1,7 @@
-#include "registry.h"
+#ifndef REGISTRY_STORE_DUMMY_H
+#define REGISTRY_STORE_DUMMY_H
+
+#include "registry/registry.h"
 
 #define DUMMY_MAX_NAME_LEN      64
 #define DUMMY_MAX_VAL_LEN       64
@@ -17,3 +20,5 @@ typedef struct {
 int registry_dummy_src(registry_dummy_t *dummy);
 
 int registry_dummy_dst(registry_dummy_t *dummy);
+
+#endif /* REGISTRY_STORE_DUMMY_H */

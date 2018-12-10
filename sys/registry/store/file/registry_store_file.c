@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "fs/fatfs.h"
-#include "mtd.h"
-#include "registry/registry_store_file.h"
-#include "board.h"
+#include "registry/store/registry_store_file.h"
+
+#define ENABLE_DEBUG (1)
+#include "debug.h"
 
 static int registry_file_load(registry_store_t *store, load_cb_t cb,
                                void *cb_arg);
@@ -21,31 +21,6 @@ static int registry_file_line_get(int *file, char *buf, int buf_len,
                                   off_t *off);
 static int registry_file_line_parse(char *buf, char **namep, char **valp);
 
-#define ENABLE_DEBUG (1)
-#include "debug.h"
-
-/* Flash mount point */
-#define FLASH_MOUNT_POINT   "/sda"
-
-static fatfs_desc_t fs_desc = {
-    .vol_idx = 0
-};
-
-/* provide mtd devices for use within diskio layer of fatfs */
-mtd_dev_t *fatfs_mtd_devs[FF_VOLUMES];
-
-#define FS_DRIVER fatfs_file_system
-
-/* this structure defines the vfs mount point:
- *  - fs field is set to the file system driver
- *  - mount_point field is the mount point name
- *  - private_data depends on the underlying file system. For both spiffs and
- *  littlefs, it needs to be a pointer to the file system descriptor */
-static vfs_mount_t flash_mount = {
-    .fs = &FS_DRIVER,
-    .mount_point = FLASH_MOUNT_POINT,
-    .private_data = &fs_desc,
-};
 
 static registry_store_itf_t interface = {
     .load = registry_file_load,
@@ -54,16 +29,8 @@ static registry_store_itf_t interface = {
 
 int registry_file_src(registry_file_t *file)
 {
-#if MODULE_MTD_SDCARD
-    fatfs_mtd_devs[0] = MTD_0;
-#endif
-
     file->store.itf = &interface;
     registry_src_register(&file->store);
-    if (vfs_mount(&flash_mount) < 0) {
-        DEBUG("[registry_file_src] Failed to mount FS\n");
-        return 1;
-    }
     return 0;
 }
 
