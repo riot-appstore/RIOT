@@ -201,7 +201,8 @@ static const i2c_conf_t i2c_config[] = {
 
 #define ADC_0_NEG_INPUT                    ADC_INPUTCTRL_MUXNEG_GND
 #define ADC_0_GAIN_FACTOR_DEFAULT          ADC_INPUTCTRL_GAIN_1X
-#define ADC_0_REF_DEFAULT                  ADC_REFCTRL_REFSEL_INT1V
+//#define ADC_0_REF_DEFAULT                  ADC_REFCTRL_REFSEL_INT1V
+#define ADC_0_REF_DEFAULT                  ADC_REFCTRL_REFSEL_AREFA
 
 /* Digital pins (1 to 6) on the board can be configured as analog inputs */
 static const adc_conf_chan_t adc_channels[] = {
