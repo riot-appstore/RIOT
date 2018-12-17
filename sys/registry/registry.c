@@ -103,7 +103,8 @@ int registry_set_value(char *name, char *val_str)
         return -EINVAL;
     }
 
-    return hndlr->hndlr_set(name_argc - 1, &name_argv[1], val_str);
+    return hndlr->hndlr_set(name_argc - 1, &name_argv[1], val_str,
+                            hndlr->context);
 }
 
 char *registry_get_value(char *name, char *buf, int buf_len)
@@ -122,14 +123,15 @@ char *registry_get_value(char *name, char *buf, int buf_len)
         return NULL;
     }
 
-    return hndlr->hndlr_get(name_argc - 1, &name_argv[1], buf, buf_len);
+    return hndlr->hndlr_get(name_argc - 1, &name_argv[1], buf, buf_len,
+                            hndlr->context);
 }
 
 static int _registry_call_commit(clist_node_t *current, void *res)
 {
     registry_handler_t *hndlr = container_of(current, registry_handler_t, node);
     if (hndlr->hndlr_commit) {
-        *((int *)res) = hndlr->hndlr_commit();
+        *((int *)res) = hndlr->hndlr_commit(hndlr->context);
     }
     return 0;
 }
@@ -148,7 +150,7 @@ int registry_commit(char *name)
             return -EINVAL;
         }
         if (hndlr->hndlr_commit) {
-            return hndlr->hndlr_commit();
+            return hndlr->hndlr_commit(hndlr->context);
         }
         else {
             return 0;
@@ -156,7 +158,8 @@ int registry_commit(char *name)
     }
     else {
         rc = 0;
-        clist_foreach(&registry_handlers, _registry_call_commit, (void *)(&rc2));
+        clist_foreach(&registry_handlers, _registry_call_commit,
+                      (void *)(&rc2));
         if (!rc) {
             rc = rc2;
         }
@@ -178,7 +181,8 @@ int registry_export(int (*export_func)(const char *name, char *val), char *name)
             return -EINVAL;
         }
         if (hndlr->hndlr_export) {
-            return hndlr->hndlr_export(export_func, name_argc - 1, &name_argv[1]);
+            return hndlr->hndlr_export(export_func, name_argc - 1,
+                                       &name_argv[1], hndlr->context);
         }
         else {
             return 0;
@@ -195,7 +199,7 @@ int registry_export(int (*export_func)(const char *name, char *val), char *name)
         do  {
             hndlr = container_of(node, registry_handler_t, node);
             if (hndlr->hndlr_export) {
-                hndlr->hndlr_export(export_func, 0, NULL);
+                hndlr->hndlr_export(export_func, 0, NULL, hndlr->context);
             }
         } while (node != registry_handlers.next);
         return 0;

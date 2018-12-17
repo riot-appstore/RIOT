@@ -90,11 +90,13 @@ typedef struct registry_store_itf {
 typedef struct {
     clist_node_t node;
     char *name;
-    char *(*hndlr_get)(int argc, char **argv, char *val, int val_len_max);
-    int (*hndlr_set)(int argc, char **argv, char *val);
-    int (*hndlr_commit)(void);
+    char *(*hndlr_get)(int argc, char **argv, char *val, int val_len_max,
+                       void *context);
+    int (*hndlr_set)(int argc, char **argv, char *val, void *context);
+    int (*hndlr_commit)(void *context);
     int (*hndlr_export)(int (*export_func)(const char *name, char *val),
-                        int argc, char **argv);
+                        int argc, char **argv, void *context);
+    void *context;
 } registry_handler_t;
 
 extern clist_node_t registry_handlers;

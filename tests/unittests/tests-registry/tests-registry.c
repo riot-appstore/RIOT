@@ -95,8 +95,9 @@ static void test_parse_name_and_lookup(void)
 int _set_value_argc = 0;
 char *_set_value_argv[REGISTRY_MAX_DIR_DEPTH];
 char *_set_value_val;
-static int _set_cb(int argc, char **argv, char *val)
+static int _set_cb(int argc, char **argv, char *val, void *context)
 {
+    (void) context;
     _set_value_argc = argc;
     _set_value_val = val;
     memcpy(_set_value_argv, argv, REGISTRY_MAX_DIR_DEPTH);
@@ -128,10 +129,12 @@ static void test_set_value(void)
 int _get_value_argc = 0;
 char *_get_value_argv[REGISTRY_MAX_DIR_DEPTH];
 char _get_value_response[] = TEST_SET_VALUE_VAL;
-static char *_get_cb(int argc, char **argv, char *val, int val_len_max)
+static char *_get_cb(int argc, char **argv, char *val, int val_len_max,
+                     void *context)
 {
     (void)val;
     (void)val_len_max;
+    (void) context;
     _get_value_argc = argc;
     memcpy(_get_value_argv, argv, REGISTRY_MAX_DIR_DEPTH);
     return _get_value_response;
@@ -188,8 +191,9 @@ static void test_get_value(void)
 }
 
 int _commit_cb_calls = 0;
-static int _commit_cb(void)
+static int _commit_cb(void *context)
 {
+    (void) context;
     _commit_cb_calls++;
     return 0;
 }
