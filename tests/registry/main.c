@@ -64,11 +64,11 @@ registry_file_t registry_file_storage = {
 };
 #endif /* MODULE_REGISTRY_STORE_FILE */
 
-
 #ifndef BYTES_LENGTH
 #define BYTES_LENGTH    16
 #endif
 
+/* These are the 'configuration parameters' */
 int test_opt1 = 0;
 int test_opt2 = 1;
 unsigned char test_bytes[BYTES_LENGTH] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
@@ -256,14 +256,17 @@ static void _dump_cb(char *name, char *val, void *cb_arg)
     (void)cb_arg;
     printf("%s \t %s\n", name, val);
 }
+
 int cmd_dump(int argc, char **argv)
 {
     if (argc != 1) {
         printf("usage: %s\n", argv[0]);
         return 1;
     }
-    DEBUG("Dumping storage...");
+    DEBUG("Dumping storage...\n");
 
+    /* This is just for debuging pourposes, storage facilities are not mean to
+     * be called directly */
 #if defined(MODULE_REGISTRY_STORE_DUMMY)
     registry_dummy_storage.store.itf->load(&registry_dummy_storage.store,
                                            _dump_cb, NULL);
@@ -316,6 +319,8 @@ int main(void)
     registry_dummy_dst(&registry_dummy_storage);
 #elif defined(MODULE_REGISTRY_STORE_EEPROM)
     DEBUG("Using EEPROM registry store\n");
+    registry_eeprom_src(&registry_eeprom_storage);
+    registry_eeprom_dst(&registry_eeprom_storage);
 #elif defined(MODULE_REGISTRY_STORE_FILE)
     DEBUG("Using File registry store\n");
 #if MODULE_MTD_SDCARD
