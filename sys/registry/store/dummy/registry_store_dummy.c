@@ -1,6 +1,8 @@
 #include <string.h>
-#include <stdio.h>
 #include "registry/store/registry_store_dummy.h"
+
+#define ENABLE_DEBUG (0)
+#include "debug.h"
 
 dummy_store_storage_t dummy_store[DUMMY_STORE_CAPACITY];
 
@@ -36,7 +38,7 @@ static int registry_dummy_load(registry_store_t *store, load_cb_t cb,
     char name[REGISTRY_MAX_NAME_LEN];
     char val[REGISTRY_MAX_NAME_LEN];
 
-    puts("[registry_store_dummy] Loading...");
+    DEBUG("[registry_store_dummy] Loading...\n");
     for (int i = 0; i < DUMMY_STORE_CAPACITY; i++) {
         if (strlen(dummy_store[i].name)) {
             strcpy(name, dummy_store[i].name);
@@ -53,19 +55,19 @@ static int registry_dummy_save(registry_store_t *store, const char *name,
     int free_slot = -1;
     (void)store;
 
-    printf("[registry_store_dummy] Saving: %s = %s\n", name, value);
+    DEBUG("[registry_store_dummy] Saving: %s = %s\n", name, value);
     for (int i = 0; i < DUMMY_STORE_CAPACITY; i++) {
         if (strlen(dummy_store[i].name)) {
-            printf("[registr_store_dummy]: Checking slot with name %s\n",dummy_store[i].name);
+            DEBUG("[registr_store_dummy]: Checking slot with name %s\n",dummy_store[i].name);
             if (!strcmp(name, dummy_store[i].name)) {
-                printf("[registry_store_dummy] Saved in slot: %d\n", i);
+                DEBUG("[registry_store_dummy] Saved in slot: %d\n", i);
                 strcpy(dummy_store[i].val, value);
                 return 0;
             }
         }
         else {
             if (free_slot == -1) {
-                printf("[registry_store_dummy]: Free slot in: %d\n", i);
+                DEBUG("[registry_store_dummy]: Free slot in: %d\n", i);
                 free_slot = i;
             }
         }

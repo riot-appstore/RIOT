@@ -1,12 +1,11 @@
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include "registry/store/registry_store_file.h"
 
-#define ENABLE_DEBUG (1)
+#define ENABLE_DEBUG (0)
 #include "debug.h"
 
 static int registry_file_load(registry_store_t *store, load_cb_t cb,
@@ -61,13 +60,13 @@ static int registry_file_save(registry_store_t *store, const char *name,
     DEBUG("[registry_file_save] saving: %s\n", buf);
 
     if (registry_file_line_find(store, name, &location)) {
-        // add new entry
+        /* Add new entry */
         DEBUG("[registry_file_save] entry not found. Creating...\n");
         location = 0;
         whence = SEEK_END;
     }
     else {
-        // edit entry
+        /* Edit entry */
         DEBUG("[registry_file_save] entry found. Editing...\n");
         whence = SEEK_SET;
     }

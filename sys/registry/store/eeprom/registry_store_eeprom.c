@@ -1,10 +1,12 @@
 
 #include <string.h>
 #include <errno.h>
-#include <stdio.h>
 #include "registry/store/registry_store_eeprom.h"
 #include "periph/eeprom.h"
 #include "eepreg.h"
+
+#define ENABLE_DEBUG (0)
+#include "debug.h"
 
 static int registry_eeprom_load(registry_store_t *store, load_cb_t cb,
                                void *cb_arg);
@@ -43,7 +45,7 @@ int _load_cb(char *name, void *arg)
     int i = 0;
     char val[REGISTRY_MAX_VAL_LEN];
 
-    printf("[registry_store_eeprom]: Load CB name = %s\n", name);
+    DEBUG("[registry_store_eeprom]: Load CB name = %s\n", name);
 
     eepreg_read(&pos, name);
 
@@ -66,7 +68,7 @@ static int registry_eeprom_load(registry_store_t *store, load_cb_t cb,
     };
     (void)store;
 
-    puts("[registry_store_eeprom] Loading...");
+    DEBUG("[registry_store_eeprom] Loading...\n");
 
     eepreg_iter(_load_cb, &load_cb_arg);
     return 0;
@@ -80,7 +82,7 @@ static int registry_eeprom_save(registry_store_t *store, const char *name,
     size_t len = strlen(value);
     (void)store;
 
-    printf("[registry_store_eeprom] Saving: %s = %s\n", name, value);
+    DEBUG("[registry_store_eeprom] Saving: %s = %s\n", name, value);
 
     if (!eepreg_add(&pos, name, (uint32_t)(len + 1))) {
         eeprom_write(pos, (const uint8_t *)value, len);

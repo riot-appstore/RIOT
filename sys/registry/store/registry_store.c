@@ -1,9 +1,11 @@
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include "kernel_defines.h"
 #include "clist.h"
 #include "registry/registry.h"
+
+#define ENABLE_DEBUG (0)
+#include "debug.h"
 
 registry_store_t *save_dst;
 clist_node_t load_srcs;
@@ -11,7 +13,7 @@ clist_node_t load_srcs;
 static void _registry_load_cb(char *name, char *val, void *cb_arg)
 {
     (void)cb_arg;
-    printf("[registry_store] Setting %s to %s\n", name, val);
+    DEBUG("[registry_store] Setting %s to %s\n", name, val);
     registry_set_value(name, val);
 }
 
@@ -69,7 +71,7 @@ int registry_save_one(const char *name, char *value)
 {
     registry_store_t *dst = save_dst;
     registry_dup_check_arg_t dup;
-    printf("[registry_store] Saving: %s = %s\n",name, value);
+    DEBUG("[registry_store] Saving: %s = %s\n",name, value);
 
     if (!dst) {
         return -ENOENT;
