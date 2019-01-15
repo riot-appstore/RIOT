@@ -100,7 +100,7 @@ int registry_save(void)
     do  {
         hndlr = container_of(node, registry_handler_t, node);
         if (hndlr->hndlr_export) {
-            hndlr->hndlr_export(registry_save_one, 0, NULL);
+            hndlr->hndlr_export(registry_save_one, 0, NULL, hndlr->context);
         }
     } while (node != registry_handlers.next);
     return 0;

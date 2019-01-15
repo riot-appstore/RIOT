@@ -75,8 +75,10 @@ unsigned char test_bytes[BYTES_LENGTH] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                                           0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                                           0xAA, 0xAA, 0xAA, 0xAA};
 
-char *get_handler(int argc, char **argv, char *val, int val_len_max)
+char *get_handler(int argc, char **argv, char *val, int val_len_max, void *ctx)
 {
+    (void)ctx;
+
     if (argc) {
         if (!strcmp("opt1", argv[0])) {
         return registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt1,
@@ -95,12 +97,13 @@ char *get_handler(int argc, char **argv, char *val, int val_len_max)
     return NULL;
 }
 
-int set_handler(int argc, char **argv, char *val)
+int set_handler(int argc, char **argv, char *val, void *ctx)
 {
+    (void)ctx;
     const char buf[BYTES_LENGTH];
     int res = 0;
     int len = sizeof(test_bytes);
-    
+
     if (argc) {
         DEBUG("[set_handler] Setting %s to %s\n", argv[0], val);
         if (!strcmp("opt1", argv[0])) {
@@ -129,10 +132,11 @@ int set_handler(int argc, char **argv, char *val)
 }
 
 int export_handler(int (*export_func)(const char *name, char *val), int argc,
-                   char **argv)
+                   char **argv, void *ctx)
 {
     (void)argv;
     (void)argc;
+    (void)ctx;
     char buf[REGISTRY_MAX_VAL_LEN];
 
     if (!argc) {

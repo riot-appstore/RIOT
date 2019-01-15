@@ -5,7 +5,7 @@
 #include "registry/registry.h"
 #include "kernel_defines.h"
 
-#define ENABLE_DEBUG (1)
+#define ENABLE_DEBUG (0)
 #include "debug.h"
 
 static int _registry_cmp_name(clist_node_t *current, void *name);
@@ -25,22 +25,11 @@ void registry_init(void)
     registry_store_init();
 }
 
-/**
- * @brief Registers a new handler in the registry module
- * 
- * @param handler Pointer to the handler to register
- */
 void registry_register(registry_handler_t *handler)
 {
     clist_rpush(&registry_handlers, &(handler->node));
 }
 
-/**
- * @brief Finds a registry handler based on its name.
- * 
- * @param name String with the name
- * @return registry_handler_t* Pointer to the handler. NULL if not found.
- */
 registry_handler_t *registry_handler_lookup(char *name)
 {
     clist_node_t *node = NULL;
