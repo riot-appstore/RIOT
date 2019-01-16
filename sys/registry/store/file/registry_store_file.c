@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include "registry/store/registry_store_file.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG (1)
 #include "debug.h"
 
 static int registry_file_load(registry_store_t *store, load_cb_t cb,
@@ -187,14 +187,9 @@ static int registry_file_line_get(int *file, char *buf, int buf_len, off_t *off)
     }
     buf[res] = '\0';
 
-    /* Search the end of line */
-    end = strchr(buf, '\n');
-
-    if (end) {
-        *end = '\0';
-    }
-    else {
-        end = strchr(buf, '\0');
+    end = buf;
+    while (*end != '\n' && (end-buf) < res) {
+        end++;
     }
 
     /* Calculate the length of the line */
