@@ -72,11 +72,6 @@ registry_handler_t *registry_handler_parse_and_lookup(char *name, int *name_argc
                                                   char *name_argv[])
 {
     registry_parse_name(name, name_argc, name_argv);
-    
-    for (int i = 0; i < *name_argc; i++) {
-        printf("  %s\n",name_argv[i]);
-    }
-
     return registry_handler_lookup(name_argv[0]);
 }
 
