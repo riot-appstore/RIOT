@@ -5,13 +5,64 @@
 #include <stdlib.h>
 
 #include "registry/registry.h"
-#include "fmt.h"
 #include "base64.h"
+
+#if defined(CONFIG_REGISTRY_USE_INT64)
+#include "fmt.h"
+
+static int64_t dec_to_s64(char *p_str, char **e_ptr)
+{
+    uint64_t val = 0U;
+    uint64_t prev_val = 0U;
+    bool neg = false;
+    int digit;
+
+    if (*p_str == '-') {
+        neg = true;
+        p_str++;
+    } else if (*p_str == '+') {
+        p_str++;
+    }
+
+    while (1) {
+        if (*p_str >= '0' && *p_str <= '9') {
+            digit = *p_str - '0';
+        } else {
+            break;
+        }
+
+        val *= 10;
+        val += digit;
+
+        if (val < prev_val) {
+            break;
+        }
+
+        prev_val = val;
+        p_str++;
+    }
+
+    if (e_ptr != 0) {
+        *e_ptr = p_str;
+    }
+
+    if (neg) {
+        return -val;
+    } else {
+        return val;
+    }
+}
+#endif /* CONFIG_REGISTRY_USE_INT64 */
 
 int registry_value_from_str(char *val_str, registry_type_t type, void *vp,
                             int maxlen)
 {
+#if defined(CONFIG_REGISTRY_USE_INT64)
+    int64_t val = 0;
+#else /* CONFIG_REGISTRY_USE_INT64 */
     int32_t val = 0;
+#endif
+
     char *eptr = 0;
 
     if (!val_str) {
@@ -43,10 +94,6 @@ int registry_value_from_str(char *val_str, registry_type_t type, void *vp,
                 *(int32_t *)vp = val;
             }
             break;
-        case REGISTRY_TYPE_INT64:
-            // TODO implement fmt 64 scan function
-            puts("Not implemented");
-            break;
         case REGISTRY_TYPE_STRING:
             val = strlen(val_str);
             if (val + 1 > maxlen) {
@@ -54,6 +101,15 @@ int registry_value_from_str(char *val_str, registry_type_t type, void *vp,
             }
             strcpy(vp, val_str);
             break;
+#if defined(CONFIG_REGISTRY_USE_INT64)
+        case REGISTRY_TYPE_INT64:
+            val = dec_to_s64(val_str, &eptr);
+            if (*eptr != '\0') {
+                goto err;
+            }
+            *(int64_t *)vp = val;
+            break;
+#endif /* CONFIG_REGISTRY_USE_INT64 */
         default:
             goto err;
     }
@@ -92,7 +148,12 @@ int registry_bytes_from_str(char *val_str, void *vp, int *len)
 char *registry_str_from_value(registry_type_t type, void *vp, char *buf,
                               int buf_len)
 {
+#if defined(CONFIG_REGISTRY_USE_INT64)
+    int64_t val = 0;
+    int len;
+#else /* CONFIG_REGISTRY_USE_INT64 */
     int32_t val = 0;
+#endif
 
     if (type == REGISTRY_TYPE_STRING) {
         return vp;
@@ -100,30 +161,33 @@ char *registry_str_from_value(registry_type_t type, void *vp, char *buf,
 
     switch(type) {
         case REGISTRY_TYPE_INT8:
+            val = *(int8_t *)vp;
+            break;
         case REGISTRY_TYPE_INT16:
+            val = *(int8_t *)vp;
+            break;
         case REGISTRY_TYPE_INT32:
+            val = *(int32_t *)vp;
+            break;
         case REGISTRY_TYPE_BOOL:
-            if (type == REGISTRY_TYPE_BOOL) {
-                val = *(bool *)vp;
-            }
-            else if (type == REGISTRY_TYPE_INT8) {
-                val = *(int8_t *)vp;
-            }
-            else if (type == REGISTRY_TYPE_INT16) {
-                val = *(int16_t *)vp;
-            }
-            else if (type == REGISTRY_TYPE_INT32) {
-                val = *(int32_t *)vp;
-            }
-            snprintf(buf, buf_len, "%ld", (long)val);
-            return buf;
+            val = *(bool *)vp;
+            break;
+#if defined(CONFIG_REGISTRY_USE_INT64)
         case REGISTRY_TYPE_INT64:
-            // TODO implement in fmt
-            puts("Not implemented in fmt yet");
-            return NULL;
+            val = *(int64_t *)vp;
+            len = fmt_s64_dec(NULL, val);
+            if (len > buf_len - 1) {
+                return NULL;
+            }
+            fmt_s64_dec(buf, val);
+            buf[len] = '\0';
+            return buf;
+#endif /* CONFIG_REGISTRY_USE_INT64 */
         default:
             return NULL;
     }
+    snprintf(buf, buf_len, "%lld", val);
+    return buf;
 }
 
 char *registry_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len)

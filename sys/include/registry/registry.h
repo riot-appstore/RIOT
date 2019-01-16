@@ -62,12 +62,17 @@ typedef enum {
     REGISTRY_TYPE_INT8,      /**< 8-bits integer */
     REGISTRY_TYPE_INT16,     /**< 16-bits integer */
     REGISTRY_TYPE_INT32,     /**< 32-bits integer */
-    REGISTRY_TYPE_INT64,     /**< 64-bits integer */
     REGISTRY_TYPE_STRING,    /**< String */
     REGISTRY_TYPE_BYTES,     /**< Binary data */
-    REGISTRY_TYPE_FLOAT,     /**< Float */
-    REGISTRY_TYPE_DOUBLE,    /**< Double precision */
     REGISTRY_TYPE_BOOL,      /**< Boolean */
+
+#if defined(CONFIG_REGISTRY_USE_INT64) || defined(DOXYGEN)
+    REGISTRY_TYPE_INT64,     /**< 64-bits integer */
+#endif /* CONFIG_REGISTRY_USE_INT64 */
+
+#if defined(CONFIG_REGISTRY_USE_FLOAT) || defined(DOXYGEN)
+    REGISTRY_TYPE_FLOAT,     /**< Float */
+#endif /* CONFIG_REGISTRY_USE_FLOAT */
 } registry_type_t;
 
 /**
