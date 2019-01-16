@@ -69,8 +69,10 @@ registry_file_t registry_file_storage = {
 #endif
 
 /* These are the 'configuration parameters' */
-int test_opt1 = 0;
-int test_opt2 = 1;
+//int64_t test_opt1 = 0;
+//float test_opt2 = 1.33;
+int8_t test_opt1 = 0;
+int8_t test_opt2 = 1;
 unsigned char test_bytes[BYTES_LENGTH] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                                           0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                                           0xAA, 0xAA, 0xAA, 0xAA};

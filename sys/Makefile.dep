@@ -4,6 +4,11 @@ endif
 
 ifneq (,$(filter registry,$(USEMODULE)))
   USEMODULE += base64
+  USEMODULE += fmt
+endif
+
+ifneq (,$(filter registry_store_eeprom,$(USEMODULE)))
+  USEMODULE += eepreg
 endif
 
 ifneq (,$(filter prng_fortuna,$(USEMODULE)))

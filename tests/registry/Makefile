@@ -6,15 +6,7 @@ USEMODULE += registry
 USEMODULE += registry_store
 USEMODULE += registry_store_file
 #USEMODULE += registry_store_dummy
-
-CFLAGS += -DBYTES_LENGTH=16
-
-#DISABLE_MODULE += auto_init
-
-# chronos is missing a getchar implementation
-BOARD_BLACKLIST += chronos
-
-TEST_ON_CI_WHITELIST += all
+#USEMODULE += registry_store_eeprom
 
 # Added for FS (to check)
 CFLAGS += -DVFS_FILE_BUFFER_SIZE=72 -DVFS_DIR_BUFFER_SIZE=44
@@ -32,5 +24,7 @@ USEMODULE += vfs
 
 # Use a file system
 USEMODULE += fatfs
+
+#CFLAGS += -DCONFIG_REGISTRY_USE_INT64 #-DCONFIG_REGISTRY_USE_FLOAT
 
 include $(RIOTBASE)/Makefile.include

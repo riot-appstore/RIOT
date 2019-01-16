@@ -149,11 +149,13 @@ char *registry_str_from_value(registry_type_t type, void *vp, char *buf,
                               int buf_len)
 {
 #if defined(CONFIG_REGISTRY_USE_INT64)
-    int64_t val = 0;
+    int64_t val64 = 0;
+#endif /* CONFIG_REGISTRY_USE_INT64 */
+
+#if defined(CONFIG_REGISTRY_USE_INT64) || defined(CONFIG_REGISTRY_USE_FLOAT)
     int len;
-#else /* CONFIG_REGISTRY_USE_INT64 */
+#endif /* CONFIG_REGISTRY_USE_INT64 || CONFIG_REGISTRY_USE_FLOAT */
     int32_t val = 0;
-#endif
 
     if (type == REGISTRY_TYPE_STRING) {
         return vp;
@@ -174,19 +176,31 @@ char *registry_str_from_value(registry_type_t type, void *vp, char *buf,
             break;
 #if defined(CONFIG_REGISTRY_USE_INT64)
         case REGISTRY_TYPE_INT64:
-            val = *(int64_t *)vp;
-            len = fmt_s64_dec(NULL, val);
+            val64 = *(int64_t *)vp;
+            len = fmt_s64_dec(NULL, val64);
             if (len > buf_len - 1) {
                 return NULL;
             }
-            fmt_s64_dec(buf, val);
+            fmt_s64_dec(buf, val64);
             buf[len] = '\0';
             return buf;
 #endif /* CONFIG_REGISTRY_USE_INT64 */
+
+#if defined(CONFIG_REGISTRY_USE_FLOAT)
+        case REGISTRY_TYPE_FLOAT:
+            len = fmt_float(NULL, *(float *)vp, 7);
+            if (len > buf_len - 1) {
+                return NULL;
+            }
+            fmt_float(buf, *(float *)vp, 7);
+            buf[len] = '\0';
+            return buf;
+#endif /* CONFIG_REGISTRY_USE_FLOAT */
+
         default:
             return NULL;
     }
-    snprintf(buf, buf_len, "%lld", val);
+    snprintf(buf, buf_len, "%ld", val);
     return buf;
 }
 
