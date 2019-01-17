@@ -33,6 +33,18 @@ extern "C" {
 #define BASE64_ERROR_DATA_IN_SIZE     (-4) /**< error value for invalid input buffer size      */
 
 /**
+ * @brief Macro for estimating the amount of bytes needed for decoding a
+ * given string in base64
+ */
+#define BASE64_ESTIMATE_DECODE_SIZE(str_len) ((str_len / 4) * 3)
+
+/**
+ * @brief Macro for estimating the length of the resulting string to be encoded
+ * in base64
+ */
+#define BASE64_ESTIMATE_ENCODE_SIZE(buf_len) (4 * ((buf_len + 2) / 3))
+
+/**
  * @brief           Encodes a given datum to base64 and save the result to the given destination.
  * @param[in]       data_in           pointer to the datum to encode
  * @param[in]       data_in_size      the size of `data_in`
