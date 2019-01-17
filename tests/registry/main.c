@@ -69,9 +69,7 @@ registry_file_t registry_file_storage = {
 #endif
 
 /* These are the 'configuration parameters' */
-//int64_t test_opt1 = 0;
-//float test_opt2 = 1.33;
-int8_t test_opt1 = 0;
+int64_t test_opt1 = 0;
 int8_t test_opt2 = 1;
 unsigned char test_bytes[BYTES_LENGTH] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                                           0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
@@ -83,7 +81,7 @@ char *get_handler(int argc, char **argv, char *val, int val_len_max, void *ctx)
 
     if (argc) {
         if (!strcmp("opt1", argv[0])) {
-        return registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt1,
+        return registry_str_from_value(REGISTRY_TYPE_INT64, (void *)&test_opt1,
                                        val, val_len_max);
         }
         else if (!strcmp("opt2", argv[0])) {
@@ -109,7 +107,7 @@ int set_handler(int argc, char **argv, char *val, void *ctx)
     if (argc) {
         DEBUG("[set_handler] Setting %s to %s\n", argv[0], val);
         if (!strcmp("opt1", argv[0])) {
-            return registry_value_from_str(val, REGISTRY_TYPE_INT8,
+            return registry_value_from_str(val, REGISTRY_TYPE_INT64,
                                            (void *) &test_opt1, 0);
         }
         else if (!strcmp("opt2", argv[0])) {
@@ -143,7 +141,7 @@ int export_handler(int (*export_func)(const char *name, char *val), int argc,
 
     if (!argc) {
         // We have to print every parameter
-        registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt1, buf,
+        registry_str_from_value(REGISTRY_TYPE_INT64, (void *)&test_opt1, buf,
                                 sizeof(buf));
         export_func("app/opt1", buf);
         registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt2, buf,
@@ -156,7 +154,7 @@ int export_handler(int (*export_func)(const char *name, char *val), int argc,
     }
     else {
         if (!strcmp("opt1", argv[0])) {
-            registry_str_from_value(REGISTRY_TYPE_INT8, (void *)&test_opt1, buf,
+            registry_str_from_value(REGISTRY_TYPE_INT64, (void *)&test_opt1, buf,
                                     sizeof(buf));
             export_func("app/opt1", buf);
             return 0;

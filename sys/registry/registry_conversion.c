@@ -63,6 +63,10 @@ int registry_value_from_str(char *val_str, registry_type_t type, void *vp,
     int32_t val = 0;
 #endif
 
+#if defined(CONFIG_REGISTRY_USE_FLOAT)
+    float val_f;
+#endif /* CONFIG_REGISTRY_USE_FLOAT */
+
     char *eptr = 0;
 
     if (!val_str) {
@@ -101,6 +105,7 @@ int registry_value_from_str(char *val_str, registry_type_t type, void *vp,
             }
             strcpy(vp, val_str);
             break;
+
 #if defined(CONFIG_REGISTRY_USE_INT64)
         case REGISTRY_TYPE_INT64:
             val = dec_to_s64(val_str, &eptr);
@@ -110,6 +115,16 @@ int registry_value_from_str(char *val_str, registry_type_t type, void *vp,
             *(int64_t *)vp = val;
             break;
 #endif /* CONFIG_REGISTRY_USE_INT64 */
+
+#if defined(CONFIG_REGISTRY_USE_FLOAT)
+        case REGISTRY_TYPE_FLOAT:
+            val_f = strtof(val_str, &eptr);
+            if (*eptr != '\0') {
+                goto err;
+            }
+            *(float *)vp = val_f;
+            break;
+#endif /* CONFIG_REGISTRY_USE_FLOAT */
         default:
             goto err;
     }
