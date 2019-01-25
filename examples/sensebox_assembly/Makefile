@@ -9,6 +9,29 @@ RIOTBASE ?= $(CURDIR)/../..
 
 BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-uno
 
+USEMODULE += shell
+USEMODULE += registry
+USEMODULE += registry_store
+USEMODULE += registry_store_file
+
+# Added for FS (to check)
+CFLAGS += -DVFS_FILE_BUFFER_SIZE=72 -DVFS_DIR_BUFFER_SIZE=44
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=\(4*THREAD_STACKSIZE_DEFAULT\)
+
+# Use MTD (flash layer)
+USEMODULE += mtd
+USEMODULE += mtd_sdcard
+USEMODULE += sdcard_spi
+USEMODULE += auto_init_storage
+USEMODULE += fatfs_vfs
+
+# Use VFS
+USEMODULE += vfs
+
+# Use a file system
+USEMODULE += fatfs
+
+CFLAGS += -DCONFIG_REGISTRY_USE_INT64
 # we want to use SAUL:
 #USEMODULE += saul_default
 # include the shell:

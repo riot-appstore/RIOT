@@ -73,6 +73,7 @@ extern void lora_send_data(data_t* data, int len);
 extern int s_and_a_init_all(data_t* data); 
 extern void s_and_a_update_all(data_t* data);
 extern void s_and_a_hardware_test(void);
+extern int rh_and_shell_run(void);
 
 /* TODO: this means the size of data[] needs to be the same as
  * the number of sensors, manually. Make it so it's easier to change */
@@ -163,6 +164,7 @@ int main(void)
 #ifdef HARDWARE_TEST_ON
     s_and_a_hardware_test();
 #endif
+    rh_and_shell_run();
 
     /* start the main thread */
     collect_and_send_pid = thread_create(collect_and_send_stack, sizeof(collect_and_send_stack),
