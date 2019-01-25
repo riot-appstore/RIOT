@@ -94,6 +94,12 @@ int registry_value_from_str(char *val_str, registry_type_t type, void *vp,
                 }
                 *(int8_t *)vp = val;
             }
+            else if (type == REGISTRY_TYPE_INT16) {
+                if (val < INT16_MIN || val > INT16_MAX) {
+                    goto err;
+                }
+                *(int16_t *)vp = val;
+            }
             else if (type == REGISTRY_TYPE_INT32) {
                 *(int32_t *)vp = val;
             }
@@ -181,7 +187,7 @@ char *registry_str_from_value(registry_type_t type, void *vp, char *buf,
             val = *(int8_t *)vp;
             break;
         case REGISTRY_TYPE_INT16:
-            val = *(int8_t *)vp;
+            val = *(int16_t *)vp;
             break;
         case REGISTRY_TYPE_INT32:
             val = *(int32_t *)vp;
