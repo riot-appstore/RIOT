@@ -10,6 +10,8 @@
 #if defined(CONFIG_REGISTRY_USE_INT64)
 #include "fmt.h"
 
+#define ENABLE_DEBUG (1)
+#include "debug.h"
 static int64_t dec_to_s64(char *p_str, char **e_ptr)
 {
     uint64_t val = 0U;
@@ -105,10 +107,13 @@ int registry_value_from_str(char *val_str, registry_type_t type, void *vp,
             }
             break;
         case REGISTRY_TYPE_STRING:
+            DEBUG("Parsing string registry type.\n");
             val = strlen(val_str);
             if (val + 1 > maxlen) {
+                DEBUG("Error, maxlen exceeded.\n");
                 goto err;
             }
+            DEBUG("Copied string\n");
             strcpy(vp, val_str);
             break;
 

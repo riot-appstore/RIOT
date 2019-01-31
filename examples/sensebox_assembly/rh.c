@@ -20,6 +20,8 @@
 #include "board.h"
 #include "registry/registry.h"
 #include "registry/store/registry_store.h"
+#include "net/loramac.h"
+#include "semtech_loramac.h"
 
 #define ENABLE_DEBUG (1)
 #include "debug.h"
@@ -66,9 +68,17 @@ registry_file_t registry_file_storage = {
 //                                          0xAA, 0xAA, 0xAA, 0xAA};
 //
 
-const char *str_DEVEUI = "00FA3F26B4128C7D";
-const char *str_APPEUI = "70B3D57ED001193D";
-const char *str_APPKEY = "90579278EAA9870F1380B39E4F40FC7A";
+//char  = "00FA3F26B4128C7D";
+//char  = "70B3D57ED001193D";
+//char  = "90579278EAA9870F1380B39E4F40FC7A";
+#define LORAMAC_DEVEUI_STRLEN ((2 * LORAMAC_DEVEUI_LEN) + 1)
+#define LORAMAC_APPEUI_STRLEN ((2 * LORAMAC_APPEUI_LEN) + 1)
+#define LORAMAC_APPKEY_STRLEN ((2 * LORAMAC_APPKEY_LEN) + 1)
+
+char str_DEVEUI[LORAMAC_DEVEUI_STRLEN];
+char str_APPEUI[LORAMAC_APPEUI_STRLEN];
+char str_APPKEY[LORAMAC_APPKEY_STRLEN];
+
 //TODO: the number of "watering level" config params will depend on the setup -
 //i.e the compile-time configuration
 uint16_t watering_level_plant_1;
@@ -100,6 +110,18 @@ char *get_handler(int argc, char **argv, char *val, int val_len_max, void *ctx)
             return registry_str_from_value(REGISTRY_TYPE_INT16, (void *)&data_send_period,
                                         val, val_len_max);
         }
+        else if (!strcmp("lora_deveui", argv[0])) {
+            return registry_str_from_value(REGISTRY_TYPE_STRING, (void *)&str_DEVEUI,
+                                        val, val_len_max);
+        }
+        else if (!strcmp("lora_appeui", argv[0])) {
+            return registry_str_from_value(REGISTRY_TYPE_STRING, (void *)&str_APPEUI,
+                                        val, val_len_max);
+        }
+        else if (!strcmp("lora_appkey", argv[0])) {
+            return registry_str_from_value(REGISTRY_TYPE_STRING, (void *)&str_APPKEY,
+                                        val, val_len_max);
+        }
     }
     return NULL;
 }
@@ -121,6 +143,22 @@ int set_handler(int argc, char **argv, char *val, void *ctx)
         else if (!strcmp("data_send_period", argv[0])) {
             return registry_value_from_str(val, REGISTRY_TYPE_INT16,
                                            (void *) &data_send_period, 0);
+        }
+        else if (!strcmp("lora_deveui", argv[0])) {
+            DEBUG("[set_handler] Setting %s to %s\n", argv[0], val);
+            int ret =  registry_value_from_str(val, REGISTRY_TYPE_STRING,
+                                           (void *) &str_DEVEUI, LORAMAC_DEVEUI_STRLEN);
+            DEBUG("[set_handler]%s set to %s\n", argv[0], str_DEVEUI);
+            return ret;
+            
+        }
+        else if (!strcmp("lora_appeui", argv[0])) {
+            return registry_value_from_str(val, REGISTRY_TYPE_STRING,
+                                           (void *) &str_APPEUI, LORAMAC_APPEUI_STRLEN);
+        }
+        else if (!strcmp("lora_appkey", argv[0])) {
+            return registry_value_from_str(val, REGISTRY_TYPE_STRING,
+                                           (void *) &str_APPKEY, LORAMAC_APPKEY_STRLEN);
         }
     }
     return -1;
@@ -145,6 +183,13 @@ int export_handler(int (*export_func)(const char *name, char *val), int argc,
         registry_str_from_value(REGISTRY_TYPE_INT16, (void *)&data_send_period, buf,
                                 sizeof(buf));
         export_func("app/data_send_period", buf);
+        /*TODO: if these values aren't populated, buf just remains the same and
+         * it prints the previous values. Should print "value not set" or the
+         * like
+         */
+        export_func("app/lora_deveui", (char*)str_DEVEUI);
+        export_func("app/lora_appeui", (char*)str_APPEUI);
+        export_func("app/lora_appkey", (char*)str_APPKEY);
         return 0;
     }
     else {
@@ -164,6 +209,15 @@ int export_handler(int (*export_func)(const char *name, char *val), int argc,
             registry_str_from_value(REGISTRY_TYPE_INT16, (void *)&data_send_period, buf,
                                     sizeof(buf));
             export_func("app/data_send_period", buf);
+        }
+        else if (!strcmp("lora_deveui", argv[0])) {
+            export_func("app/lora_deveui", (char*)str_DEVEUI);
+        }
+        else if (!strcmp("lora_appeui", argv[0])) {
+            export_func("app/lora_appeui", (char*)str_APPEUI);
+        }
+        else if (!strcmp("lora_appkey", argv[0])) {
+            export_func("app/lora_appkey", (char*)str_APPKEY);
         }
     }
     return 1;

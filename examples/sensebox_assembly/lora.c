@@ -21,6 +21,10 @@ typedef struct {
 semtech_loramac_t loramac;
 lora_serialization_t serialization;
 
+extern char str_DEVEUI[(2 * LORAMAC_DEVEUI_LEN) + 1];
+extern char str_APPEUI[(2 * LORAMAC_APPEUI_LEN) + 1];
+extern char str_APPKEY[(2 * LORAMAC_APPKEY_LEN) + 1];
+
 static void _lora_serialize_data(data_t* data, int data_len, lora_serialization_t* serialization)
 {
     assert(data);
@@ -79,14 +83,16 @@ void lora_send_data(data_t *data, int len)
 
 uint8_t lora_join(void)
 {
+    /* Convert identifiers and application key */
+    /*TODO: make sure this is safe - atm str_xxxx need to be terminated with
+     * null before the end of the array
+    // */
     uint8_t deveui[LORAMAC_DEVEUI_LEN];
     uint8_t appeui[LORAMAC_APPEUI_LEN];
     uint8_t appkey[LORAMAC_APPKEY_LEN];
-
-    /* Convert identifiers and application key */
-    fmt_hex_bytes(deveui, DEVEUI);
-    fmt_hex_bytes(appeui, APPEUI);
-    fmt_hex_bytes(appkey, APPKEY);
+    fmt_hex_bytes(deveui, str_DEVEUI);
+    fmt_hex_bytes(appeui, str_APPEUI);
+    fmt_hex_bytes(appkey, str_APPKEY);
 
     /* Initialize the loramac stack */
     semtech_loramac_init(&loramac);

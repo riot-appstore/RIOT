@@ -52,7 +52,7 @@ typedef struct {
 /*********** Configurations ******************/
 #define WATERING_ON
 //#define HARDWARE_TEST_ON
-#define LORA_DATA_SEND_ON
+//#define LORA_DATA_SEND_ON
 
 #define PERIOD              (5U)   /* messages sent every 20 mins */
 /***********************************************/
