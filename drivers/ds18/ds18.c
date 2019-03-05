@@ -75,7 +75,7 @@ static int ds18_read_bit(ds18_t *dev, uint8_t *bit)
 
     /* Measure time low of device pin, timeout after slot time*/
     start = xtimer_now_usec();
-    //DEBUG("4");
+    DEBUG("4");
     while (!gpio_read(dev->pin) && measurement < DS18_DELAY_SLOT) {
         measurement = xtimer_now_usec() - start;
     }
